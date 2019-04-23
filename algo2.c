@@ -1,6 +1,6 @@
 /**
  * 
- * C S 4473 Homework 1
+ * C S 4473 Project 2
  * Algorithm 2
  * Daniel Schon
  * Robert Monaco
@@ -11,36 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-// Allocate a 2-dimensional array of doubles in contiguous memory
-// This makes it much easier to send and receive with MPI
-double** alloc_contiguous(int rows, int cols)
-{
-  // Allocate one contiguous memory block for data
-  double* data = (double*)malloc(rows*cols*sizeof(double));
-  // Allocate our matrix
-  double** matrix = (double**)malloc(rows*sizeof(double*));
-  // Point matrix cells to contiguous memory locations
-  for (int i = 0; i < rows; i++)
-    matrix[i] = &(data[cols*i]);
-
-  return matrix;
-}
-
-// Get a pointer to a matrix so we can send or receive it
-double* get_ptr(double** matrix)
-{
-  return &(matrix[0][0]);
-}
-
-// Free memory used by a contiguous matrix
-void free_contiguous(double** matrix)
-{
-  // Free the data array and the nested array itself
-  free(matrix[0]);
-  free(matrix);
-}
-
 
 // Generate a normally-distributed random number between -1.0 and 1.0
 double random_normal()
@@ -74,8 +44,8 @@ int algorithm2(int n, int comm_sz, int my_rank, MPI_Comm comm)
   int partition_sz,           // Number of numbers in a partition
       rows_per_partition;     // Number of rows (or columns) in a partition
 
-  if (my_rank == 0)
-    printf("Run: n=%d p=%d\n", n, comm_sz);
+  int thread_count;  // Number of threads
+  thread_count = atoi(argv[1]);
 
   // Seed the random number so each one is unique
   srand(time(NULL) * (my_rank + 1));
@@ -83,20 +53,15 @@ int algorithm2(int n, int comm_sz, int my_rank, MPI_Comm comm)
   // Initialize all the matrices
   matrix_a = alloc_contiguous(n, n);
   matrix_b = alloc_contiguous(n, n);
-  matrix_b_col_maj = alloc_contiguous(n, n);
   matrix_c = alloc_contiguous(n, n);
 
   // Process 0 generates a random matrix
-  if(my_rank == 0)
+  for (int y = 0; y < n; y++)
   {
-    for (int y = 0; y < n; y++)
+    for (int x = 0; x < n; x++)
     {
-      for (int x = 0; x < n; x++)
-      {
-        matrix_a[y][x] = random_normal();
-        matrix_b[y][x] = random_normal();
-        matrix_b_col_maj[x][y] = matrix_b[y][x];
-      }
+      matrix_a[y][x] = random_normal();
+      matrix_b[y][x] = random_normal();
     }
   }
 
