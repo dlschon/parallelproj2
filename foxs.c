@@ -37,29 +37,21 @@ int gen_mat(double * mat, int size){
 
 //Apply fox's algorithm to mat_a and mat_b and store result
 //in mat_c
-int fox(double * mat_a, double * mat_b, double * mat_c, int size){
-    //processor rank from openMP
-    int my_rank = omp_get_thread_num();
-    //number of threads from openMP
-    int thread_count = omp_get_num_threads();
+int fox(double * mat_a, double * mat_b, double * mat_c, int size, int thread_count){
 
-    //size of grid block
-    int block_size = (int)(size / sqrt((double)thread_count));
-    
     int offset, i, a;
-
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(thread_count) private(offset, i, a)
     for(a=0; a < size*size; a++){
         offset = (int)(a / size);
         i = (int)(a % size);
 
-        mat_c[a] += mat_a[(size*(i + offset)) + i] * mat_b[size*offset + i];
+        mat_c[a] += mat_a[(size*i) + ((i + offset) % size)] * mat_b[size*((i + offset) % size) + i];
     }
     
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char** argv){
     printf("here");
     //number of threads
     int thread_count = atoi(argv[1]);
@@ -88,8 +80,7 @@ int main(int argc, char* argv[]){
 
     printf("%d",1);
 
-    # pragma omp parallel num_threads(thread_count)
-    fox(mat_a, mat_b, result, n);
+    fox(mat_a, mat_b, result, n, thread_count);
 
     printf("%d",2);
 
