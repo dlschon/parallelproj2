@@ -1,4 +1,4 @@
-//Fox's algorithm serial implementation
+///Fox's algorithm serial implementation
 //Bobby Monaco and Daniel Schon
 #include <omp.h>
 #include <stdio.h>
@@ -43,10 +43,6 @@ int fox(double * mat_a, double * mat_b, double * mat_c, int size, int thread_cou
     for(a=0; a < size*size; a++){
         offset = (int)(a / size);
         i = (int)(a % size);
-
-        printf("a: %d\n", (size*i) + ((i + offset) % size));
-        printf("b: %d\n", size*((i + offset) % size) + i);
-        printf("\n");
         mat_c[a] += mat_a[(size*i) + ((i + offset) % size)] * mat_b[size*((i + offset) % size) + i];
     }
     
@@ -54,15 +50,10 @@ int fox(double * mat_a, double * mat_b, double * mat_c, int size, int thread_cou
 }
 
 int main(int argc, char** argv){
-    printf("here");
     //number of threads
     int thread_count = atoi(argv[1]);
-    //size of matrix
-    int n = atoi(argv[2]);
-    
-    //input matrices
-    double * mat_a = malloc(n*n*sizeof(double));
-    double * mat_b = malloc(n*n*sizeof(double));
+
+    double start_time, elapsed_time;
 
     //iterator variable
     int iter;
@@ -70,27 +61,28 @@ int main(int argc, char** argv){
     //matrix multiplication result
     double * result;
 
-    //generate matrices
-    gen_mat(mat_a,n);
-    gen_mat(mat_b,n);
-    printf("%d",0);
+    int n;
+    printf("%d\n",thread_count);
+    for(n=100;n<1100;n+=100){
+      if((n % (int)sqrt(thread_count) == 0)){
+        //input matrices
+        double * mat_a = malloc(n*n*sizeof(double));
+        double * mat_b = malloc(n*n*sizeof(double));
+        //generate matrices
+        gen_mat(mat_a,n);
+        gen_mat(mat_b,n);
 
-    result = malloc(n*n*sizeof(double));
-    for(iter = 0; iter < n*n; iter++){
-            result[iter] = 0.0;
-    }
-
-    printf("%d",1);
-
-    fox(mat_a, mat_b, result, n, thread_count);
-
-    printf("%d",2);
-
-    for(iter = 0; iter < n*n; iter++){
-        if(iter % n == 0){
-            printf("\n");
+        result = malloc(n*n*sizeof(double));
+        for(iter = 0; iter < n*n; iter++){
+                result[iter] = 0.0;
         }
-        printf("%f",result[iter]);
+        start_time = omp_get_wtime();
+        
+        fox(mat_a, mat_b, result, n, thread_count);
+        //calculate runtime from wall clock
+        elapsed_time = omp_get_wtime() - start_time;
+        printf("%d:%f\n", n, elapsed_time);
+      }
     }
 
     return 0;
