@@ -25,7 +25,6 @@ double random_normal()
 
 // Generate a matrix of size*size with random_normal values
 int gen_mat(double * mat, int size){
-    mat = malloc(size*size*sizeof(double));
     int i;
     
     for(i = 0; i<size*size;i++){
@@ -40,11 +39,14 @@ int gen_mat(double * mat, int size){
 int fox(double * mat_a, double * mat_b, double * mat_c, int size, int thread_count){
 
     int offset, i, a;
-    #pragma omp parallel for num_threads(thread_count) private(offset, i, a)
+    #pragma omp parallel for num_threads(thread_count) private(offset, i)
     for(a=0; a < size*size; a++){
         offset = (int)(a / size);
         i = (int)(a % size);
 
+        printf("a: %d\n", (size*i) + ((i + offset) % size));
+        printf("b: %d\n", size*((i + offset) % size) + i);
+        printf("\n");
         mat_c[a] += mat_a[(size*i) + ((i + offset) % size)] * mat_b[size*((i + offset) % size) + i];
     }
     
@@ -59,8 +61,8 @@ int main(int argc, char** argv){
     int n = atoi(argv[2]);
     
     //input matrices
-    double * mat_a;
-    double * mat_b;
+    double * mat_a = malloc(n*n*sizeof(double));
+    double * mat_b = malloc(n*n*sizeof(double));
 
     //iterator variable
     int iter;
@@ -85,10 +87,10 @@ int main(int argc, char** argv){
     printf("%d",2);
 
     for(iter = 0; iter < n*n; iter++){
-        printf("%f",result[iter]);
         if(iter % n == 0){
             printf("\n");
         }
+        printf("%f",result[iter]);
     }
 
     return 0;
